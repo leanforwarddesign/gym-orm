@@ -8,8 +8,8 @@ export default defineSchema({
       weight: v.number(),
       reps: v.number(),
       sets: v.number(),
-      date: v.string(), // ISO date string
-      userId: v.string(), // Optional: for future user auth
+      date: v.string(), 
+      userId: v.string(), 
     })
   ).index('by_userId', ['userId'])
 }); 
