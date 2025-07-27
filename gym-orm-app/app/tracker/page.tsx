@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Input } from "@/components/ui/input";
@@ -52,7 +52,7 @@ const workoutExercises = {
   ],
 };
 
-export default function TrackerPage() {
+function TrackerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const workoutType = searchParams.get('workoutType') || "Chest & Shoulders";
@@ -322,5 +322,20 @@ export default function TrackerPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TrackerPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Loading workout tracker...</h1>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+        </div>
+      </div>
+    }>
+      <TrackerContent />
+    </Suspense>
   );
 } 
