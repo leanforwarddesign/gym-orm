@@ -4,4 +4,4 @@
   "outputDirectory": "gym-orm-app/.next",
   "installCommand": "cd gym-orm-app && npm install",
   "framework": null
-}
+} 
