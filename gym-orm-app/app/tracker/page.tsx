@@ -113,7 +113,7 @@ export default function TrackerPage() {
   };
 
   // Filter lifts for today and current workout type
-  const todaysLifts = lifts?.filter(lift => 
+  const todaysLifts = lifts?.filter((lift: any) => 
     lift.date === date && lift.workoutType === workoutType
   ) || [];
 
