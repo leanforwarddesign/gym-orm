@@ -9,7 +9,9 @@ export default defineSchema({
       reps: v.number(),
       sets: v.number(),
       date: v.string(), 
-      userId: v.string(), 
+      userId: v.string(),
+      workoutType: v.string(), // "Chest & Shoulders", "Back & Arms", "Legs"
     })
   ).index('by_userId', ['userId'])
+    .index('by_userId_workoutType', ['userId', 'workoutType'])
 }); 

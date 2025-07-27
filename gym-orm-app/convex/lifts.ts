@@ -10,6 +10,7 @@ export const addLift = mutation({
     sets: v.number(),
     date: v.string(), // ISO date string
     userId: v.string(),
+    workoutType: v.string(),
   },
   handler: async (ctx: any, args: any) => {
     const id = await ctx.db.insert("lifts", {
@@ -19,6 +20,7 @@ export const addLift = mutation({
       sets: args.sets,
       date: args.date,
       userId: args.userId,
+      workoutType: args.workoutType,
     });
     return id;
   },
@@ -31,6 +33,7 @@ export const getLifts = query({
     exercise: v.optional(v.string()),
     startDate: v.optional(v.string()), // ISO date string
     endDate: v.optional(v.string()),   // ISO date string
+    workoutType: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
     let lifts = await ctx.db
@@ -40,6 +43,9 @@ export const getLifts = query({
 
     if (args.exercise) {
       lifts = lifts.filter((lift: any) => lift.exercise === args.exercise);
+    }
+    if (args.workoutType) {
+      lifts = lifts.filter((lift: any) => lift.workoutType === args.workoutType);
     }
     if (args.startDate) {
       lifts = lifts.filter((lift: any) => lift.date >= args.startDate!);
