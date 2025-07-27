@@ -1,7 +1,25 @@
 {
   "version": 2,
+<<<<<<< Updated upstream
   "buildCommand": "cd gym-orm-app && npm install && npm run build",
   "outputDirectory": "gym-orm-app/.next",
   "installCommand": "cd gym-orm-app && npm install",
   "framework": null
+=======
+  "builds": [
+    {
+      "src": "gym-orm-app/package.json",
+      "use": "@vercel/next",
+      "config": {
+        "distDir": ".next"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "gym-orm-app/$1"
+    }
+  ]
+>>>>>>> Stashed changes
 } 
