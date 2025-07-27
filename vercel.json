@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd gym-orm-app && npm ci && npm run build",
+  "buildCommand": "cd gym-orm-app && npm install && npm run build",
   "outputDirectory": "gym-orm-app/.next",
-  "installCommand": "cd gym-orm-app && npm ci",
+  "installCommand": "cd gym-orm-app && npm install",
   "framework": null
 } 
