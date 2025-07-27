@@ -51,4 +51,13 @@ export const getLifts = query({
     lifts.sort((a: any, b: any) => b.date.localeCompare(a.date));
     return lifts;
   },
-}); 
+});
+
+  export const deleteLift = mutation({
+    args: {
+      id: v.string(),
+    },
+    handler: async (ctx: any, args: any) => {
+      await ctx.db.delete(args.id);
+    },
+  });
