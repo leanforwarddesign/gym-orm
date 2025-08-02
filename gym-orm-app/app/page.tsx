@@ -11,21 +11,14 @@ const workoutTypes = [
   {
     name: "Chest & Shoulders",
     description: "Upper body power workout focusing on chest and shoulders",
-    // icon: "🔥", 
-    // color: "bg-orange-500"
   },
   {
     name: "Back & Arms", 
     description: "Pull-focused workout for back and arm development",
-    // icon: "💪",
-    // color: "bg-blue-500"
   },
   {
     name: "Legs",
     description: "Lower body strength and power training",
-
-    // icon: "🦵",
-    // color: "bg-green-500"
   },
 ];
 
@@ -33,13 +26,10 @@ export default function Home() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useConvexAuth();
   
-  // Get today's date
   const today = new Date().toISOString().split('T')[0];
   
-  // Get all lifts for the user - only when authenticated
   const lifts = useQuery(api.lifts.getLifts, isAuthenticated ? {} : "skip");
 
-  // Group lifts by workout type and date
   const groupedLifts = lifts ? lifts.reduce((acc: any, lift: any) => {
     const workoutType = lift.workoutType || "Other";
     const date = lift.date;
@@ -56,7 +46,6 @@ export default function Home() {
     return acc;
   }, {}) : {};
 
-  // Sort grouped lifts by date (most recent first)
   const sortedGroupedLifts = Object.values(groupedLifts).sort((a: any, b: any) => 
     b.date.localeCompare(a.date)
   );
@@ -65,11 +54,10 @@ export default function Home() {
     if (!isAuthenticated) return;
     router.push(`/tracker?workoutType=${encodeURIComponent(workoutType)}`);
   };
-
-  // Show loading state
+  
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Loading...</h1>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
@@ -79,67 +67,57 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Gym Tracker</h1>
-          <p className="text-xl text-muted-foreground">
-            Track your workouts and monitor your progress
-          </p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <header className="w-full p-4 flex justify-end">
         {isAuthenticated ? (
           <UserButton />
         ) : (
           <SignInButton>
-            <Button>Sign In</Button>
+            <Button variant="outline">Sign In</Button>
           </SignInButton>
         )}
-      </div>
+      </header>
 
-      {!isAuthenticated ? (
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-4">Welcome to Gym Tracker</h2>
-          <p className="text-muted-foreground mb-6">Sign in to start tracking your workouts and progress</p>
-          <SignInButton>
-            <Button size="lg">Get Started</Button>
-          </SignInButton>
-        </div>
-      ) : (
-        <>
-          {/* Workout Type Selection */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-semibold mb-6">Choose Your Workout</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {workoutTypes.map((workout) => (
-                <Card 
-                  key={workout.name} 
-                  className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-                  onClick={() => handleWorkoutTypeSelect(workout.name)}
-                >
-                  <CardHeader className="text-center">
-                    <CardTitle className="text-xl">{workout.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-center">
-                      {workout.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+      <main className="flex flex-col items-center justify-center">
+        {!isAuthenticated ? (
+          <div className="text-center py-16 max-w-2xl mx-auto">
+            <h1 className="text-5xl font-bold mb-10">Welcome to Gym Tracker</h1>
+            <p className="text-xl text-muted-foreground mb-8">Time to get massive</p>
+            <SignInButton>
+              <Button size="lg" className="rounded px-4 py-2">Get Started</Button>
+            </SignInButton>
           </div>
-
-          {/* Recent Workouts */}
-          <div>
-            <h2 className="text-2xl font-semibold mb-6">Recent Workouts</h2>
-            {sortedGroupedLifts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <div className="text-center">
-                    <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
+        ) : (
+          <div className="space-y-12">
+            <section className="text-center">
+              <h2 className="text-3xl font-bold mb-8">Choose Your Workout</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
+                {workoutTypes.map((workout) => (
+                  <Card 
+                    key={workout.name} 
+                    className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-2 hover:border-primary/20"
+                    onClick={() => handleWorkoutTypeSelect(workout.name)}
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-xl">{workout.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground">
+                        {workout.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+            <section>
+              <h2 className="text-3xl font-bold text-center">Recent Workouts</h2>
+              {sortedGroupedLifts.length === 0 ? (
+                <Card className="max-w-2xl mx-auto">
+                  <CardContent className="py-16 text-center">
+                    <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
                       <svg
-                        className="w-10 h-10 text-muted-foreground"
+                        className="w-12 h-12 text-muted-foreground"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -152,61 +130,59 @@ export default function Home() {
                         />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">No workouts yet</h3>
-                    <p className="text-muted-foreground mb-6">
+                    <h3 className="text-xl font-semibold mb-3">No workouts yet</h3>
+                    <p className="text-muted-foreground">
                       Start by selecting a workout type above to log your first session!
                     </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {sortedGroupedLifts.map((session: any) => {
-                  const totalSets = session.lifts.reduce((sum: number, lift: any) => sum + lift.sets, 0);
-                  const uniqueExercises = new Set(session.lifts.map((lift: any) => lift.exercise)).size;
-                  
-                  return (
-                    <Card key={`${session.workoutType}-${session.date}`}>
-                      <CardHeader>
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <CardTitle className="text-lg">{session.workoutType}</CardTitle>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(session.date).toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              })}
-                            </p>
-                          </div>
-                          <div className="text-right">
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-6 max-w-4xl mx-auto">
+                  {sortedGroupedLifts.map((session: any) => {
+                    const totalSets = session.lifts.reduce((sum: number, lift: any) => sum + lift.sets, 0);
+                    const uniqueExercises = new Set(session.lifts.map((lift: any) => lift.exercise)).size;
+                    
+                    return (
+                      <Card key={`${session.workoutType}-${session.date}`}>
+                        <CardHeader>
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                            <div>
+                              <CardTitle className="text-xl">{session.workoutType}</CardTitle>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(session.date).toLocaleDateString('en-US', {
+                                  weekday: 'long',
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })}
+                              </p>
+                            </div>
                             <div className="text-sm text-muted-foreground">
                               {uniqueExercises} exercises • {totalSets} sets
                             </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {session.lifts.map((lift: any) => (
-                            <div key={lift._id} className="flex justify-between items-center py-2 border-b border-muted last:border-0">
-                              <span className="font-medium">{lift.exercise}</span>
-                              <span className="text-sm text-muted-foreground">
-                                {lift.sets} sets × {lift.reps} reps @ {lift.weight}kg
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {session.lifts.map((lift: any) => (
+                              <div key={lift._id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-muted/50 last:border-0">
+                                <span className="font-medium">{lift.exercise}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  {lift.sets} sets × {lift.reps} reps @ {lift.weight}kg
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
           </div>
-        </>
-      )}
+        )}
+      </main>
     </div>
   );
 }

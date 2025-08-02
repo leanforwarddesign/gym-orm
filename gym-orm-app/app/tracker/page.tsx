@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SignInButton, UserButton } from "@clerk/nextjs";
@@ -67,26 +67,23 @@ function TrackerContent() {
   const workoutType = searchParams.get('workoutType') || "Chest & Shoulders";
   const { isAuthenticated, isLoading } = useConvexAuth();
 
-  // Form state
+  
   const [exercise, setExercise] = useState("");
   const [weight, setWeight] = useState(90);
   const [reps, setReps] = useState(8);
   const [sets, setSets] = useState(3);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
-
-  // Set default exercise based on workout type
+  
   useEffect(() => {
     const exercises = workoutExercises[workoutType as keyof typeof workoutExercises] || workoutExercises["Chest & Shoulders"];
     setExercise(exercises[0]);
   }, [workoutType]);
-
-  // Convex hooks - only run when authenticated
+  
   const addLift = useMutation(api.lifts.addLift);
   const lifts = useQuery(api.lifts.getLifts, isAuthenticated ? { startDate: date, endDate: date } : "skip");
   const deleteLift = useMutation(api.lifts.deleteLift);
 
-  // Get exercises for current workout type
   const currentExercises = workoutExercises[workoutType as keyof typeof workoutExercises] || workoutExercises["Chest & Shoulders"];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,7 +118,6 @@ function TrackerContent() {
     router.push('/');
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -133,7 +129,6 @@ function TrackerContent() {
     );
   }
 
-  // Show authentication required state
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -148,7 +143,6 @@ function TrackerContent() {
     );
   }
 
-  // Filter lifts for today and current workout type
   const todaysLifts = lifts?.filter((lift: any) => 
     lift.date === date && lift.workoutType === workoutType
   ) || [];
@@ -157,7 +151,6 @@ function TrackerContent() {
     <div className="flex flex-col items-center justify-center h-4xl">
       <div className="container mx-auto">
         <div className="space-y-8">
-          {/* Header */}
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
@@ -174,10 +167,9 @@ function TrackerContent() {
             </div>
             <UserButton />
           </div>
-
-          <Card className="px-4 py-4">
+          <Card className="px-4 py-4 ">
             <CardHeader>
-              <CardTitle className="text-2xl">Log a Lift</CardTitle>
+              <CardTitle className="text-2xl text-center">Log a Lift</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -199,17 +191,15 @@ function TrackerContent() {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                            className="absolute right-0 top-1/2 transform -translate-y-1/2 h-8 w-15 p-0"
                             type="button"
                           >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDown className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           {currentExercises.map((ex) => (
-                            <DropdownMenuItem key={ex} onClick={() => setExercise(ex)}>
+                            <DropdownMenuItem className="text-lg" key={ex} onClick={() => setExercise(ex)}>
                               {ex}
                             </DropdownMenuItem>
                           ))}
@@ -280,7 +270,6 @@ function TrackerContent() {
             </CardContent>
           </Card>
 
-          {/* Today's Session */}
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Today's Session</CardTitle>
