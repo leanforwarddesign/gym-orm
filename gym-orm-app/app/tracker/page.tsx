@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useConvexAuth, Authenticated, Unauthenticated } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SignInButton, UserButton } from "@clerk/nextjs";
 
 function calculate1RM(weight: number, reps: number) {
   // Epley formula
@@ -41,21 +42,30 @@ const workoutExercises = {
     "Barbell Curls",
     "Forearm Curls",
   ],
-  "Legs": [
-    "Squats",
-    "Deadlifts",
-    "Leg Press",
-    "Leg Extension",
-    "Leg Curl",
-    "Calf Raises",
-    "Glute Bridges",
-  ],
+"Legs": [
+  "Squats",
+  "Deadlifts",
+  "Leg Press",
+  "Leg Extension",
+  "Leg Curl",
+  "Calf Raises",
+  "Glute Bridges",
+  "Bulgarian Split Squats",
+  "Walking Lunges",
+  "Step-Ups",
+  "Sumo Deadlifts",
+  "Hip Thrusts",
+  "Box Jumps",
+  "Single-Leg Romanian Deadlifts",
+  "Hack Squats",
+],
 };
 
 function TrackerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const workoutType = searchParams.get('workoutType') || "Chest & Shoulders";
+  const { isAuthenticated, isLoading } = useConvexAuth();
 
   // Form state
   const [exercise, setExercise] = useState("");
@@ -71,12 +81,9 @@ function TrackerContent() {
     setExercise(exercises[0]);
   }, [workoutType]);
 
-  // Placeholder userId (replace with real auth later)
-  const userId = "demo-user";
-
-  // Convex hooks
+  // Convex hooks - only run when authenticated
   const addLift = useMutation(api.lifts.addLift);
-  const lifts = useQuery(api.lifts.getLifts, { userId, startDate: date, endDate: date });
+  const lifts = useQuery(api.lifts.getLifts, isAuthenticated ? { startDate: date, endDate: date } : "skip");
   const deleteLift = useMutation(api.lifts.deleteLift);
 
   // Get exercises for current workout type
@@ -84,6 +91,8 @@ function TrackerContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) return;
+    
     setLoading(true);
     try {
       await addLift({ 
@@ -91,8 +100,7 @@ function TrackerContent() {
         weight, 
         reps, 
         sets, 
-        date, 
-        userId, 
+        date,
         workoutType 
       });
       setExercise(currentExercises[0]);
@@ -105,12 +113,40 @@ function TrackerContent() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!isAuthenticated) return;
     await deleteLift({ id });
   };
 
   const handleFinishSession = () => {
     router.push('/');
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Loading...</h1>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authentication required state
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Sign in required</h1>
+          <p className="text-muted-foreground mb-6">You need to sign in to track your workouts</p>
+          <SignInButton>
+            <Button size="lg">Sign In</Button>
+          </SignInButton>
+        </div>
+      </div>
+    );
+  }
 
   // Filter lifts for today and current workout type
   const todaysLifts = lifts?.filter((lift: any) => 
@@ -136,6 +172,7 @@ function TrackerContent() {
                 Track your lifts for today's session
               </p>
             </div>
+            <UserButton />
           </div>
 
           <Card className="px-4 py-4">

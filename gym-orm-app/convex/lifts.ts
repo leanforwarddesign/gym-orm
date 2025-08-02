@@ -9,36 +9,46 @@ export const addLift = mutation({
     reps: v.number(),
     sets: v.number(),
     date: v.string(), // ISO date string
-    userId: v.string(),
     workoutType: v.string(),
   },
   handler: async (ctx: any, args: any) => {
+    // Check if user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
     const id = await ctx.db.insert("lifts", {
       exercise: args.exercise,
       weight: args.weight,
       reps: args.reps,
       sets: args.sets,
       date: args.date,
-      userId: args.userId,
+      userId: identity.subject, // Use the authenticated user's ID
       workoutType: args.workoutType,
     });
     return id;
   },
 });
 
-// Query to get lifts for a user, optionally filtered by exercise or date range
+// Query to get lifts for the authenticated user, optionally filtered by exercise or date range
 export const getLifts = query({
   args: {
-    userId: v.string(),
     exercise: v.optional(v.string()),
     startDate: v.optional(v.string()), // ISO date string
     endDate: v.optional(v.string()),   // ISO date string
     workoutType: v.optional(v.string()),
   },
   handler: async (ctx: any, args: any) => {
+    // Check if user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
     let lifts = await ctx.db
       .query("lifts")
-      .withIndex("by_userId", (q: any) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q: any) => q.eq("userId", identity.subject))
       .collect();
 
     if (args.exercise) {
@@ -59,11 +69,28 @@ export const getLifts = query({
   },
 });
 
-  export const deleteLift = mutation({
-    args: {
-      id: v.string(),
-    },
-    handler: async (ctx: any, args: any) => {
-      await ctx.db.delete(args.id);
-    },
-  });
+export const deleteLift = mutation({
+  args: {
+    id: v.string(),
+  },
+  handler: async (ctx: any, args: any) => {
+    // Check if user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get the lift to verify ownership
+    const lift = await ctx.db.get(args.id);
+    if (!lift) {
+      throw new Error("Lift not found");
+    }
+
+    // Verify that the authenticated user owns this lift
+    if (lift.userId !== identity.subject) {
+      throw new Error("Not authorized to delete this lift");
+    }
+
+    await ctx.db.delete(args.id);
+  },
+});
