@@ -1,86 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Dumbbell, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-function calculate1RM(weight: number, reps: number) {
-  // Epley formula
-  return Math.round(weight * (1 + reps / 30));
-}
+import { SignInButton, UserButton } from "@clerk/nextjs";
 
 const workoutTypes = [
   {
     name: "Chest & Shoulders",
-    exercises: [
-      "Bench Press",
-      "Incline Bench Press",
-      "Overhead Press",
-      "Lateral Raise",
-      "Chest Fly",
-    ],
-      // icon: "💪",
-      // color: "bg-red-500"
+    description: "Upper body power workout focusing on chest and shoulders",
   },
   {
-    name: "Back & Arms",
-    exercises: [
-      "Bent Over Rows",
-      "Lat Pulldown",
-      "T-bar Row",
-      "Bicep Curls",
-      "Hammer Curls",
-      "Barbell Curls",
-      "Forearm Curls",
-    ],
-    // icon: "🎯",
-    // color: "bg-blue-500"
+    name: "Back & Arms", 
+    description: "Pull-focused workout for back and arm development",
   },
   {
     name: "Legs",
-    exercises: [
-      "Squats",
-      "Deadlifts",
-      "Leg Press",
-      "Leg Extension",
-      "Leg Curl",
-      "Calf Raises",
-      "Glute Bridges",
-    ],
-    // icon: "🦵",
-    // color: "bg-green-500"
+    description: "Lower body strength and power training",
   },
 ];
 
 export default function Home() {
   const router = useRouter();
-  const userId = "demo-user";
+  const { isAuthenticated, isLoading } = useConvexAuth();
   
-  // Get today's date
   const today = new Date().toISOString().split('T')[0];
   
-  // Get all lifts for the user
-  const lifts = useQuery(api.lifts.getLifts, { userId });
+  const lifts = useQuery(api.lifts.getLifts, isAuthenticated ? {} : "skip");
 
-  // Group lifts by workout type and date
   const groupedLifts = lifts ? lifts.reduce((acc: any, lift: any) => {
     const workoutType = lift.workoutType || "Other";
     const date = lift.date;
@@ -97,114 +46,143 @@ export default function Home() {
     return acc;
   }, {}) : {};
 
-  // Sort grouped lifts by date (most recent first)
   const sortedGroupedLifts = Object.values(groupedLifts).sort((a: any, b: any) => 
     b.date.localeCompare(a.date)
   );
 
   const handleWorkoutTypeSelect = (workoutType: string) => {
+    if (!isAuthenticated) return;
     router.push(`/tracker?workoutType=${encodeURIComponent(workoutType)}`);
   };
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Loading...</h1>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center h-4xl">
-      <div className="container mx-auto">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2">
-              <Dumbbell className="h-8 w-8" />
-              <h1 className="text-4xl font-bold tracking-tight">Gym Tracker</h1>
-            </div>
-            <p className="text-muted-foreground text-lg">
-              Select your workout type to get started
-            </p>
-          </div>
+    <div className="min-h-screen bg-background">
+      <header className="w-full p-4 flex justify-end">
+        {isAuthenticated ? (
+          <UserButton />
+        ) : (
+          <SignInButton>
+            <Button variant="outline">Sign In</Button>
+          </SignInButton>
+        )}
+      </header>
 
-          {/* Workout Type Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">Choose Your Workout</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <main className="flex flex-col items-center justify-center">
+        {!isAuthenticated ? (
+          <div className="text-center py-16 max-w-2xl mx-auto">
+            <h1 className="text-5xl font-bold mb-10">Welcome to Gym Tracker</h1>
+            <p className="text-xl text-muted-foreground mb-8">Time to get massive</p>
+            <SignInButton>
+              <Button size="lg" className="rounded px-4 py-2">Get Started</Button>
+            </SignInButton>
+          </div>
+        ) : (
+          <div className="space-y-12">
+            <section className="text-center">
+              <h2 className="text-3xl font-bold mb-8">Choose Your Workout</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
                 {workoutTypes.map((workout) => (
-                  <Button
-                    key={workout.name}
+                  <Card 
+                    key={workout.name} 
+                    className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-2 hover:border-primary/20"
                     onClick={() => handleWorkoutTypeSelect(workout.name)}
-                    variant="outline"
-                    className="h-30 pt-4 p-6 flex flex-col items-center gap-4 hover:shadow-lg transition-all"
                   >
-                    <div className="text-center">
-                      <h3 className="font-semibold text-lg">{workout.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {workout.exercises.length} exercises
+                    <CardHeader>
+                      <CardTitle className="text-xl">{workout.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground">
+                        {workout.description}
                       </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Workouts */}
-          {sortedGroupedLifts.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Recent Workouts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="multiple" className="w-full">
-                  {sortedGroupedLifts.map((group: any, index: number) => (
-                    <AccordionItem key={index} value={`workout-${index}`}>
-                      <AccordionTrigger className="text-left">
-                        <div className="flex items-center justify-between w-full mr-4">
-                          <div>
-                            <span className="font-semibold">{group.workoutType}</span>
-                            <span className="text-muted-foreground ml-2">
-                              ({group.lifts.length} exercises)
-                            </span>
+            </section>
+            <section>
+              <h2 className="text-3xl font-bold text-center">Recent Workouts</h2>
+              {sortedGroupedLifts.length === 0 ? (
+                <Card className="max-w-2xl mx-auto">
+                  <CardContent className="py-16 text-center">
+                    <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
+                      <svg
+                        className="w-12 h-12 text-muted-foreground"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">No workouts yet</h3>
+                    <p className="text-muted-foreground">
+                      Start by selecting a workout type above to log your first session!
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-6 max-w-4xl mx-auto">
+                  {sortedGroupedLifts.map((session: any) => {
+                    const totalSets = session.lifts.reduce((sum: number, lift: any) => sum + lift.sets, 0);
+                    const uniqueExercises = new Set(session.lifts.map((lift: any) => lift.exercise)).size;
+                    
+                    return (
+                      <Card key={`${session.workoutType}-${session.date}`}>
+                        <CardHeader>
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                            <div>
+                              <CardTitle className="text-xl">{session.workoutType}</CardTitle>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(session.date).toLocaleDateString('en-US', {
+                                  weekday: 'long',
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })}
+                              </p>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {uniqueExercises} exercises • {totalSets} sets
+                            </div>
                           </div>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(group.date).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="overflow-hidden rounded-lg border">
-                          <Table>
-                            <TableHeader>
-                              <TableRow className="bg-muted/30">
-                                <TableHead>Exercise</TableHead>
-                                <TableHead className="text-right">Weight (kg)</TableHead>
-                                <TableHead className="text-right">Reps</TableHead>
-                                <TableHead className="text-right">Sets</TableHead>
-                                <TableHead className="text-right">1RM (kg)</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {group.lifts.map((lift: any) => (
-                                <TableRow key={lift._id}>
-                                  <TableCell className="font-medium">{lift.exercise}</TableCell>
-                                  <TableCell className="text-right">{lift.weight}</TableCell>
-                                  <TableCell className="text-right">{lift.reps}</TableCell>
-                                  <TableCell className="text-right">{lift.sets}</TableCell>
-                                  <TableCell className="text-right font-semibold">
-                                    {calculate1RM(lift.weight, lift.reps)}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </CardContent>
-            </Card>
-          )}
-      </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {session.lifts.map((lift: any) => (
+                              <div key={lift._id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-muted/50 last:border-0">
+                                <span className="font-medium">{lift.exercise}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  {lift.sets} sets × {lift.reps} reps @ {lift.weight}kg
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
